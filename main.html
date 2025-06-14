@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Constitution Builder Quiz</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(to right, #e3f2fd, #ffffff);
+      margin: 0;
+      padding: 0;
+      color: #333;
+    }
+    #quiz, #builder, #card-page, #summary-page {
+      max-width: 800px;
+      margin: 50px auto;
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      position: relative;
+    }
+    h1, h3 {
+      text-align: center;
+      color: #1976d2;
+      margin-top: 0;
+    }
+    .question {
+      margin-bottom: 20px;
+      font-size: 1.3em;
+    }
+    .options button, .submit-btn, .card-btn {
+      display: block;
+      width: 100%;
+      margin: 10px 0;
+      padding: 12px;
+      font-size: 1em;
+      background-color: #1976d2;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      transition: background 0.3s;
+      cursor: pointer;
+    }
+    .options button:hover, .submit-btn:hover, .card-btn:hover {
+      background-color: #0d47a1;
+    }
+    .input-group {
+      margin-bottom: 15px;
+    }
+    .input-group label {
+      font-weight: bold;
+      display: block;
+      margin-bottom: 5px;
+    }
+    .input-group input, .input-group textarea {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      font-size: 1em;
+      box-sizing: border-box;
+    }
+    .slider-group { margin: 20px 0; }
+    .slider-group label { font-weight: bold; display: block; margin-bottom: 5px; }
+    .slider-container { display: flex; align-items: center; justify-content: space-between; }
+    .slider-container input[type="range"] { width: 80%; }
+    #help-button {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background-color: #ffc107;
+      border: none;
+      border-radius: 50%;
+      font-size: 1.2em;
+      padding: 5px 12px;
+      cursor: pointer;
+      font-weight: bold;
+      line-height: 1;
+    }
+    #help-popup {
+      display: none;
+      position: fixed;
+      top: 50px;
+      right: 50px;
+      width: 400px;
+      max-height: 80vh;
+      overflow-y: auto;
+      background: white;
+      border: 2px solid #1976d2;
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.3);
+      z-index: 1000;
+    }
+    #help-popup h2 {
+      margin-top: 0;
+      color: #1976d2;
+    }
+    #help-popup button {
+      background-color: #d32f2f;
+      color: white;
+      border: none;
+      padding: 5px 10px;
+      margin-top: 10px;
+      cursor: pointer;
+      border-radius: 5px;
+    }
+    .card {
+      border: 2px solid #1976d2;
+      padding: 20px;
+      margin-bottom: 20px;
+      border-radius: 10px;
+      background: #f5faff;
+    }
+    .card-title {
+      font-weight: bold;
+      font-size: 1.2em;
+      margin-bottom: 10px;
+    }
+    .card-btn-group {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      margin-top: 15px;
+    }
+    .card-btn-group button {
+      flex: 1;
+    }
+    #feedback {
+      font-weight: bold;
+      font-size: 1.2em;
+      margin-top: 10px;
+      min-height: 1.5em;
+    }
+    #status {
+      margin-top: 5px;
+      font-size: 0.9em;
+      color: #555;
+    }
+    #summary-page p {
+      font-size: 1.1em;
+      line-height: 1.5;
+      margin-bottom: 1em;
+    }
+  </style>
+</head>
+<body>
+
+<!-- Quiz Section -->
+<div id="quiz">
+  <h1>Constitution Builder Quiz</h1>
+  <button id="help-button">?</button>
+  <div id="question" class="question"></div>
+  <div id="options" class="options"></div>
+  <div id="feedback"></div>
+  <div id="status"></div>
+</div>
+
+<!-- Country Builder Section -->
+<div id="builder" style="display:none">
+  <h1>Create Your Country</h1>
+  <div class="input-group">
+    <label for="country-name">Name of Country</label>
+    <input type="text" id="country-name" maxlength="50" placeholder="Enter your country name" />
+  </div>
+  <div class="input-group">
+    <label for="country-desc">Description of Country</label>
+    <textarea id="country-desc" maxlength="500" rows="4" placeholder="Describe your country"></textarea>
+  </div>
+
+  <h3>Cultural Values</h3>
+  <div id="sliders"></div>
+
+  <h3>Statistical Info</h3>
+  <div class="input-group">
+    <label for="population">Population</label>
+    <input type="number" id="population" min="0" placeholder="Population in millions" />
+  </div>
+  <div class="input-group">
+    <label for="size">Country Size (sq km)</label>
+    <input type="number" id="size" min="0" placeholder="Size in square kilometers" />
+  </div>
+
+  <h3>Additional Factors</h3>
+  <div id="extra-sliders"></div>
+
+  <button class="submit-btn" onclick="startCards()">Submit Constitution Framework</button>
+</div>
+
+<!-- Cards Section -->
+<div id="card-page" style="display:none">
+  <h1>Choose Your Constitution Features</h1>
+  <div id="card-container"></div>
+</div>
+
+<!-- Summary Section -->
+<div id="summary-page" style="display:none">
+  <h1>Constitution Summary</h1>
+  <div id="summary-content"></div>
+  <button class="submit-btn" onclick="restart()">Restart Game</button>
+</div>
+
+<!-- Help Popup -->
+<div id="help-popup">
+  <h2>Your Constitution: Help</h2>
+  <p><strong>What is the goal of the game?</strong><br>The goal of the game is to simulate the process of writing a good constitution by learning and making decisions that affect the balance of power and rights in your country.</p>
+  <p><strong>What is a “good constitution”?</strong><br>A good, functioning constitution must be a flexible, durable document that balances powers and protects citizens' rights.</p>
+  <p><strong>What are “Choice Points”?</strong><br>Choice Points represent the influence and resources you can spend to include various features in your constitution.</p>
+  <p><strong>How do I play?</strong><br>First, you take a quick quiz to test your knowledge. Then you create your country’s profile and finally choose constitution features by keeping or dismissing cards.</p>
+  <p><strong>About Cultural Values:</strong><br><em>Authority, Science, Collectivism, Individualism, Social Progress, Liberty, Tradition, Independence, Law & Order</em></p>
+  <button onclick="document.getElementById('help-popup').style.display='none'">Close</button>
+</div>
+
+<script>
+  // Quiz data
+  const questions = [
+    {
+      text: "Which branch of government should have the power to veto laws?",
+      options: ["Executive", "Legislative", "Judicial", "Local government"],
+      answer: "Executive",
+      explanation: "The executive branch typically has veto power over legislation."
+    },
+    {
+      text: "What is the purpose of a constitution?",
+      options: [
+        "To describe a country’s history",
+        "To provide guidelines for laws and governance",
+        "To control trade agreements",
+        "To list the names of government officials"
+      ],
+      answer: "To provide guidelines for laws and governance",
+      explanation: "A constitution sets out the fundamental principles and structures of a state."
+    },
+    {
+      text: "Which principle supports limiting government power?",
+      options: ["Checks and Balances", "Absolutism", "Monarchy", "Unitarism"],
+      answer: "Checks and Balances",
+      explanation: "Checks and balances ensure that no one branch of government becomes too powerful."
+    },
+    {
+      text: "What does the separation of powers refer to?",
+      options: [
+        "Dividing state powers with neighboring countries",
+        "Spreading power across the three branches of government",
+        "Ensuring all laws are separated by type",
+        "Using different powers for civil and criminal law"
+      ],
+      answer: "Spreading power across the three branches of government",
+      explanation: "Separation of powers refers to dividing legislative, executive, and judicial powers."
+    },
+    {
+      text: "Which right is commonly protected in democratic constitutions?",
+      options: ["Freedom of Speech", "Obedience to a monarch", "Right to own slaves", "Right to censorship"],
+      answer: "Freedom of Speech",
+      explanation: "Freedom of speech is a core right in many democratic constitutions."
+    },
+    {
+      text: "Which type of democracy elects representatives to make decisions?",
+      options: ["Direct democracy", "Anarchy", "Representative democracy", "Autocracy"],
+      answer: "Representative democracy",
+      explanation: "In representative democracies, people elect officials to make decisions for them."
+    },
+    {
+      text: "What is the rule of law?",
+      options: [
+        "The idea that laws apply to everyone equally",
+        "The rule of the strongest",
+        "The law that only applies to citizens",
+        "A rule that grants all power to the military"
+      ],
+      answer: "The idea that laws apply to everyone equally",
+      explanation: "Rule of law ensures all individuals and authorities are accountable under the law."
+    },
+    {
+      text: "What role does a constitutional court often play?",
+      options: [
+        "Write laws",
+        "Ratify treaties",
+        "Interpret the constitution",
+        "Collect taxes"
+      ],
+      answer: "Interpret the constitution",
+      explanation: "Constitutional courts often review laws and actions for constitutional compliance."
+    },
+    {
+      text: "What is federalism?",
+      options: [
+        "A single central government rules the entire country",
+        "Power is shared between national and regional governments",
+        "Laws are made only at the city level",
+        "Only one person has all the power"
+      ],
+      answer: "Power is shared between national and regional governments",
+      explanation: "Federalism involves a division of power between central and regional authorities."
+    },
+    {
+      text: "Why might a constitution include a bill of rights?",
+      options: [
+        "To increase government power",
+        "To declare war",
+        "To limit citizen freedoms",
+        "To protect individual rights and freedoms"
+      ],
+      answer: "To protect individual rights and freedoms",
+      explanation: "A bill of rights is meant to safeguard key liberties for citizens."
+    }
+  ];
+
+  let index = 0, score = 0;
+  const qEl = document.getElementById('question');
+  const oEl = document.getElementById('options');
+  const fEl = document.getElementById('feedback');
+  const sEl = document.getElementById('status');
+
+  function loadQ() {
+    if (index >= questions.length) {
+      // Hide quiz, show builder
+      document.getElementById('quiz').style.display = 'none';
+      document.getElementById('builder').style.display = 'block';
+      return;
+    }
+    let q = questions[index];
+    qEl.textContent = q.text;
+    oEl.innerHTML = "";
+    fEl.textContent = "";
+    q.options.forEach(opt => {
+      let btn = document.createElement('button');
+      btn.textContent = opt;
+      btn.onclick = () => check(opt);
+      oEl.appendChild(btn);
+    });
+    sEl.textContent = `Question ${index + 1} of ${questions.length} — Score: ${score}`;
+  }
+
+  function check(selected) {
+    let q = questions[index];
+    if (selected === q.answer) {
+      score++;
+      fEl.textContent = "✅ Correct!";
+    } else {
+      fEl.textContent = `❌ Incorrect. ${q.explanation}`;
+    }
+    index++;
+    setTimeout(loadQ, 2000);
+  }
+
+  document.getElementById('help-button').onclick = () => {
+    document.getElementById('help-popup').style.display = 'block';
+  };
+
+  // Sliders for cultural values and extra factors
+  const culturalValues = ["Authority", "Science", "Collectivism", "Individualism", "Social Progress", "Liberty", "Tradition", "Independence", "Law & Order"];
+  const extraFactors = ["Resources", "Open Borders", "Neighbor Conflicts", "Citizenship Restrictions"];
+
+  function createSliders(containerId, values) {
+    const container = document.getElementById(containerId);
+    container.innerHTML = '';
+    values.forEach(label => {
+      const group = document.createElement('div');
+      group.className = 'slider-group';
+      group.innerHTML = `
+        <label>${label}: <span id="val-${label}">50%</span></label>
+        <div class="slider-container">
+          <input type="range" min="0" max="100" value="50" oninput="document.getElementById('val-${label}').textContent=this.value+'%';">
+        </div>`;
+      container.appendChild(group);
+    });
+  }
+
+  createSliders('sliders', culturalValues);
+  createSliders('extra-sliders', extraFactors);
+
+  // Cards data for constitution features
+  const cards = [
+    {
+      title: "Head of State: Powerful President",
+      desc: "Centralized executive power in a single individual. This system allows for quick decision-making but risks authoritarianism if unchecked.",
+      category: "executive",
+      impactChecks: -2,
+      impactPerformance: 3
+    },
+    {
+      title: "Judicial Review Enabled",
+      desc: "Courts can strike down unconstitutional laws, protecting citizens and maintaining constitutional supremacy.",
+      category: "judiciary",
+      impactChecks: 3,
+      impactPerformance: 2
+    },
+    {
+      title: "Decentralized Government",
+      desc: "Significant powers granted to regional/local governments, enhancing local autonomy and participation.",
+      category: "legislative",
+      impactChecks: 2,
+      impactPerformance: 2
+    },
+    {
+      title: "Proportional Representation",
+      desc: "Legislative seats allocated by vote percentage, promoting fairer representation of diverse groups.",
+      category: "legislative",
+      impactChecks: 2,
+      impactPerformance: 3
+    },
+    {
+      title: "Mandatory Military Service",
+      desc: "All citizens must serve a term in the military, fostering unity and national defense but may limit individual freedoms.",
+      category: "executive",
+      impactChecks: 0,
+      impactPerformance: 1
+    },
+    {
+      title: "Strong Civil Rights Protections",
+      desc: "Guarantees freedoms like speech, religion, and assembly, ensuring citizens’ rights are respected.",
+      category: "civil rights",
+      impactChecks: 2,
+      impactPerformance: 3
+    },
+    {
+      title: "Independent Election Commission",
+      desc: "An impartial body oversees elections to ensure fairness and transparency.",
+      category: "legislative",
+      impactChecks: 3,
+      impactPerformance: 2
+    },
+    {
+      title: "Executive Veto Power",
+      desc: "The executive can veto legislation, providing a check on legislative power but potentially slowing lawmaking.",
+      category: "executive",
+      impactChecks: 1,
+      impactPerformance: 2
+    },
+    {
+      title: "Lifetime Judicial Appointments",
+      desc: "Judges serve for life, promoting independence but risking lack of accountability.",
+      category: "judiciary",
+      impactChecks: 2,
+      impactPerformance: 1
+    },
+    {
+      title: "Right to Bear Arms",
+      desc: "Citizens may own firearms, supporting self-defense but raising public safety concerns.",
+      category: "civil rights",
+      impactChecks: -1,
+      impactPerformance: 1
+    },
+    {
+      title: "Term Limits for Executives",
+      desc: "Limits the number of terms an executive can serve, preventing power consolidation.",
+      category: "executive",
+      impactChecks: 3,
+      impactPerformance: 2
+    },
+    {
+      title: "Public Referendums",
+      desc: "Allows citizens to vote directly on important laws, enhancing democratic participation.",
+      category: "legislative",
+      impactChecks: 2,
+      impactPerformance: 3
+    }
+  ];
+
+  let currentCardIndex = 0;
+  let chosenFeatures = [];
+
+  function startCards() {
+    // Validate inputs before proceeding
+    const name = document.getElementById('country-name').value.trim();
+    if (!name) {
+      alert("Please enter your country's name.");
+      return;
+    }
+    const population = document.getElementById('population').value;
+    const size = document.getElementById('size').value;
+    if (!population || population <= 0 || !size || size <= 0) {
+      alert("Please enter valid population and size.");
+      return;
+    }
+
+    document.getElementById('builder').style.display = 'none';
+    document.getElementById('card-page').style.display = 'block';
+    chosenFeatures = [];
+    currentCardIndex = 0;
+    showCard();
+  }
+
+  function showCard() {
+    const container = document.getElementById('card-container');
+    container.innerHTML = '';
+    if (currentCardIndex >= cards.length) {
+      showSummary();
+      return;
+    }
+    const card = cards[currentCardIndex];
+    const cardDiv = document.createElement('div');
+    cardDiv.className = 'card';
+
+    cardDiv.innerHTML = `
+      <div class="card-title">${card.title}</div>
+      <div class="card-desc">${card.desc}</div>
+      <div class="card-btn-group">
+        <button class="card-btn" style="background:#388e3c" onclick="chooseFeature(true)">Keep</button>
+        <button class="card-btn" style="background:#d32f2f" onclick="chooseFeature(false)">Dismiss</button>
+      </div>
+    `;
+    container.appendChild(cardDiv);
+  }
+
+  function chooseFeature(keep) {
+    if (keep) {
+      chosenFeatures.push(cards[currentCardIndex]);
+    }
+    currentCardIndex++;
+    showCard();
+  }
+
+  function showSummary() {
+    document.getElementById('card-page').style.display = 'none';
+    document.getElementById('summary-page').style.display = 'block';
+
+    const culturalValuesInputs = culturalValues.map(cv => {
+      const el = document.querySelector(`#sliders input[type="range"][oninput*="${cv}"]`) || document.querySelector(`#val-${cv}`).parentElement.nextElementSibling.querySelector('input[type=range]');
+      return { name: cv, value: Number(document.getElementById('val-' + cv).textContent.replace('%','')) };
+    });
+
+    const extraValuesInputs = extraFactors.map(ef => {
+      return { name: ef, value: Number(document.getElementById('val-' + ef).textContent.replace('%','')) };
+    });
+
+    // Calculate performance & checks balance based on chosen features
+    let totalChecks = 0;
+    let totalPerformance = 0;
+    chosenFeatures.forEach(f => {
+      totalChecks += f.impactChecks;
+      totalPerformance += f.impactPerformance;
+    });
+
+    // Basic scaling and evaluation text
+    const checksText = totalChecks >= 5 ? "Strong" : totalChecks >= 2 ? "Moderate" : "Weak";
+    const performanceText = totalPerformance >= 15 ? "Excellent" : totalPerformance >= 8 ? "Good" : "Needs Improvement";
+
+    // Summary text
+    let summaryHTML = `
+      <p><strong>Country Name:</strong> ${document.getElementById('country-name').value}</p>
+      <p><strong>Description:</strong> ${document.getElementById('country-desc').value || "No description provided."}</p>
+      <p><strong>Population:</strong> ${document.getElementById('population').value} million</p>
+      <p><strong>Country Size:</strong> ${document.getElementById('size').value} sq km</p>
+      <p><strong>Cultural Values:</strong></p>
+      <ul>${culturalValues.map(cv => `<li>${cv}: ${document.getElementById('val-' + cv).textContent}</li>`).join('')}</ul>
+      <p><strong>Additional Factors:</strong></p>
+      <ul>${extraFactors.map(ef => `<li>${ef}: ${document.getElementById('val-' + ef).textContent}</li>`).join('')}</ul>
+      <p><strong>Chosen Constitutional Features:</strong></p>
+      <ul>${chosenFeatures.length ? chosenFeatures.map(f => `<li>${f.title}</li>`).join('') : '<li>None selected</li>'}</ul>
+      <p><strong>Checks and Balances Strength:</strong> ${checksText}</p>
+      <p><strong>Overall Constitutional Performance:</strong> ${performanceText}</p>
+    `;
+
+    document.getElementById('summary-content').innerHTML = summaryHTML;
+  }
+
+  function restart() {
+    // Reset everything
+    index = 0;
+    score = 0;
+    currentCardIndex = 0;
+    chosenFeatures = [];
+    document.getElementById('summary-page').style.display = 'none';
+    document.getElementById('quiz').style.display = 'block';
+    // Clear inputs
+    document.getElementById('country-name').value = '';
+    document.getElementById('country-desc').value = '';
+    document.getElementById('population').value = '';
+    document.getElementById('size').value = '';
+    createSliders('sliders', culturalValues);
+    createSliders('extra-sliders', extraFactors);
+    loadQ();
+  }
+
+  // Close help popup when clicking outside or pressing ESC
+  window.onclick = function(event) {
+    const help = document.getElementById('help-popup');
+    if (event.target === help) {
+      help.style.display = 'none';
+    }
+  };
+  window.onkeydown = function(e) {
+    if (e.key === "Escape") {
+      document.getElementById('help-popup').style.display = 'none';
+    }
+  };
+
+  // Start quiz
+  loadQ();
+</script>
+
+</body>
+</html>
